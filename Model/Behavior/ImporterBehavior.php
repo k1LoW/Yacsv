@@ -206,14 +206,13 @@ class ImporterBehavior extends ModelBehavior {
 
     /**
      * _parseCsvLine
-     * http://yossy.iimp.jp/wp/?p=56
+     * @author yossy
+     * @see http://yossy.iimp.jp/wp/?p=56
      * @param $line
      */
     private function _parseCsvLine($handle){
-        $d = $this->options['delimiter'];
-        $e = $this->options['enclosure'];
-        $d = preg_quote($d);
-        $e = preg_quote($e);
+        $d = preg_quote($this->options['delimiter']);
+        $e = preg_quote($this->options['enclosure']);
         $line = "";
         $eof = false;
         while (($eof != true) && (!feof($handle))) {
