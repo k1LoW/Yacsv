@@ -165,7 +165,7 @@ class ImporterBehavior extends ModelBehavior {
                     $result = false;
                 }
             }
-            if ($result !== true) {
+            if ($result === false) {
                 $invalidLines[$key + 1] = array('message' => __('Yacsv: Invalid Line Format'),
                                                 'validationErrors' => $this->model->validationErrors,
                                                 'line' => $value['line']);
