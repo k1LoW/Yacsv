@@ -100,6 +100,26 @@ class ImporterBehaviorTest extends CakeTestCase {
 			),
 		);
 
+		$inputs[] = array(
+			'"NAME","COUNTRY"', // HEADER LINE
+			'"Oyama","Japan"',
+			'"Suzuki","Antarctica"',
+		);
+		$expected[] = array(
+			array(
+				'name' => 'NAME',
+				'country' => 'COUNTRY',
+			),
+			array(
+				'name' => 'Oyama',
+				'country' => 'Japan',
+			),
+			array(
+				'name' => 'Suzuki',
+				'country' => 'Antarctica',
+			),
+		);
+
 		$data = array();
 		for($i = 0; $i < count($inputs); ++$i) {
 			$data[] = array($inputs[$i], $expected[$i]);
@@ -107,6 +127,141 @@ class ImporterBehaviorTest extends CakeTestCase {
 
 		return $data;
 	}
+
+
+
+	/**
+	 * test for importCsbFromFile() with hasHeader option
+	 * @dataProvider csvDataProviderWithHeader
+	 */
+	public function testImportCsvFromFileWithHeader($data, $expected, $skipcount) {
+		$csvFile = $this->_makeDummyCsv($data);
+
+		$options = array(
+			'csvEncoding' => 'UTF-8',
+			'hasHeader' => true,
+			'skipHeaderCount' => $skipcount,
+			'delimiter' => ',',
+			'enclosure' => '"',
+		);
+
+		$result = $this->Importer->importCsvFromFile($csvFile, $options);
+		$this->assertTrue($result);
+
+		$results = $this->Importer->find('all');
+
+		for($i = 0; $i < count($results); ++$i) {
+			$name = $results[$i]['Importer']['name'];
+			$country = $results[$i]['Importer']['country'];
+
+			$this->assertSame($expected[$i]['name'], $name);
+			$this->assertSame($expected[$i]['country'], $country);
+		}
+	}
+
+	public function csvDataProviderWithHeader() {
+		// has a HEADER
+		$inputs[] = array(
+			'"NAME","COUNTRY"', // HEADER
+			'"Oyama","Japan"',
+			'"Suzuki","Antarctica"',
+			'"Ando",Nomad',
+		);
+		$expected[] = array(
+			array(
+				'name' => 'Oyama',
+				'country' => 'Japan',
+			),
+			array(
+				'name' => 'Suzuki',
+				'country' => 'Antarctica',
+			),
+			array(
+				'name' => 'Ando',
+				'country' => 'Nomad'
+			),
+		);
+		$skipcount[] = 1;
+
+		// NO HEADER data, but hasHeader true
+		$inputs[] = array(
+			'"Oyama","Japan"', // NO HEADER, but skip this line
+			'"Suzuki","Antarctica"',
+			'Ando,Nomad',
+		);
+		$expected[] = array(
+			array(
+				'name' => 'Suzuki',
+				'country' => 'Antarctica',
+			),
+			array(
+				'name' => 'Ando',
+				'country' => 'Nomad',
+			),
+		);
+		$skipcount[] = 1;
+
+		// has two HEADER , one skip
+		$inputs[] = array(
+			'"NAME","COUNTRY"', // HEADER
+			'"NAME2","COUNTRY2"', // HEADER2
+			'"Oyama","Japan"',
+			'"Suzuki","Antarctica"',
+			'"Ando",Nomad',
+		);
+		$expected[] = array(
+			array(
+				'name' => 'NAME2',
+				'country' => 'COUNTRY2',
+			),
+			array(
+				'name' => 'Oyama',
+				'country' => 'Japan',
+			),
+			array(
+				'name' => 'Suzuki',
+				'country' => 'Antarctica',
+			),
+			array(
+				'name' => 'Ando',
+				'country' => 'Nomad'
+			),
+		);
+		$skipcount[] = 1;
+
+		// has two HEADER , two skip
+		$inputs[] = array(
+			'"NAME","COUNTRY"', // HEADER
+			'"NAME2","COUNTRY2"', // HEADER2
+			'"Oyama","Japan"',
+			'"Suzuki","Antarctica"',
+			'"Ando",Nomad',
+		);
+		$expected[] = array(
+			array(
+				'name' => 'Oyama',
+				'country' => 'Japan',
+			),
+			array(
+				'name' => 'Suzuki',
+				'country' => 'Antarctica',
+			),
+			array(
+				'name' => 'Ando',
+				'country' => 'Nomad'
+			),
+		);
+		$skipcount[] = 2;
+
+
+		$data = array();
+		for($i = 0; $i < count($inputs); ++$i) {
+			$data[] = array($inputs[$i], $expected[$i], $skipcount[$i]);
+		}
+
+		return $data;
+	}
+
 
 
 }

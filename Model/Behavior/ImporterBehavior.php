@@ -27,6 +27,7 @@ class ImporterBehavior extends ModelBehavior {
         $this->fields = $model->importFields;
         $defaults = array('csvEncoding' => 'SJIS-win',
                           'hasHeader' => false,
+                          'skipHeaderCount' => 1,
                           'delimiter' => ',',
                           'enclosure' => '"',
                           'forceImport' => false,
@@ -63,7 +64,7 @@ class ImporterBehavior extends ModelBehavior {
                     }
                 }
 
-                $filePath = TMP . $data[$model->alias][$csvField]['name'];
+                $filePath = TMP . uniqid('importer_', true) .'_'. $data[$model->alias][$csvField]['name'];
 
                 move_uploaded_file($tmpFile, $filePath);
 
@@ -103,6 +104,7 @@ class ImporterBehavior extends ModelBehavior {
         $this->fields = $model->importFields;
         $defaults = array('csvEncoding' => 'SJIS-win',
                           'hasHeader' => false,
+                          'skipHeaderCount' => 1,
                           'delimiter' => ',',
                           'enclosure' => '"',
                           'forceImport' => false,
@@ -194,7 +196,9 @@ class ImporterBehavior extends ModelBehavior {
                 $csvData[] = $result;
             }
             if ($this->options['hasHeader']) {
-                $header = array_shift($csvData);
+                for ($i = 0; $i < $this->options['skipHeaderCount']; ++$i) {
+                    $header = array_shift($csvData);
+                }
             }
             fclose($handle);
         } catch (Exception $e){
