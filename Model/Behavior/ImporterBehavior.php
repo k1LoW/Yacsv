@@ -27,6 +27,7 @@ class ImporterBehavior extends ModelBehavior {
         $this->fields = $model->importFields;
         $defaults = array('csvEncoding' => 'SJIS-win',
                           'hasHeader' => false,
+                          'skipHeaderCount' => 1,
                           'delimiter' => ',',
                           'enclosure' => '"',
                           'forceImport' => false,
@@ -103,6 +104,7 @@ class ImporterBehavior extends ModelBehavior {
         $this->fields = $model->importFields;
         $defaults = array('csvEncoding' => 'SJIS-win',
                           'hasHeader' => false,
+                          'skipHeaderCount' => 1,
                           'delimiter' => ',',
                           'enclosure' => '"',
                           'forceImport' => false,
@@ -194,7 +196,9 @@ class ImporterBehavior extends ModelBehavior {
                 $csvData[] = $result;
             }
             if ($this->options['hasHeader']) {
-                $header = array_shift($csvData);
+                for ($i = 0; $i < $this->options['skipHeaderCount']; ++$i) {
+                    $header = array_shift($csvData);
+                }
             }
             fclose($handle);
         } catch (Exception $e){
