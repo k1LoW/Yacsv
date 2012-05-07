@@ -63,7 +63,7 @@ class ImporterBehavior extends ModelBehavior {
                     }
                 }
 
-                $filePath = TMP . $data[$model->alias][$csvField]['name'];
+                $filePath = TMP . uniqid('importer_', true) .'_'. $data[$model->alias][$csvField]['name'];
 
                 move_uploaded_file($tmpFile, $filePath);
 
