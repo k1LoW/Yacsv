@@ -263,5 +263,56 @@ class ImporterBehaviorTest extends CakeTestCase {
 	}
 
 
+	/**
+	 * @dataProvider importedCountDataProvider
+	 */
+	public function testGetImportedCount($data, $expected) {
+		$csvFile = $this->_makeDummyCsv($data);
+
+		$options = array(
+			'csvEncoding' => 'UTF-8',
+			'hasHeader' => false,
+			'delimiter' => "\t",
+			'enclosure' => '"',
+			'forceImport' => true,
+		);
+
+		$result = $this->Importer->importCsvFromFile($csvFile, $options);
+		$this->assertTrue($result);
+
+		$result = $this->Importer->getImportedCount();
+		$this->assertSame($expected, $result);
+	}
+
+
+	/**
+	 * dataProvider for testGetImportedCount
+	 */
+	public function importedCountDataProvider() {
+		$inputs[] = array(
+			"Oyama\tJapan",
+			"Suzuki\tAntarctica",
+		);
+		$expected[] = 2;
+
+		// include invalid line
+		$inputs[] = array(
+			"Oyama\tJapan",
+			"hoge", // invalid line
+			"Suzuki\tAntarctica",
+		);
+		$expected[] = 2;
+
+		// no data
+		$inputs[] = array();
+		$expected[] = 0;
+
+		$data = array();
+		for($i = 0; $i < count($inputs); ++$i) {
+			$data[] = array($inputs[$i], $expected[$i]);
+		}
+
+		return $data;
+	}
 
 }
