@@ -10,7 +10,7 @@ class YacsvException extends CakeException {
      */
     public function __construct($message = null, $code = 404) {
         if (empty($message)) {
-            $message = __('YacsvException');
+            $message = __d('Yacsv', 'YacsvException');
         }
         parent::__construct($message, $code);
     }
