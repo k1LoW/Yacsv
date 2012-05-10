@@ -6,6 +6,7 @@ class ImporterBehavior extends ModelBehavior {
 
     private $model;
     private $options;
+    private $importedCount = 0;
 
     /**
      * setUp
@@ -143,6 +144,7 @@ class ImporterBehavior extends ModelBehavior {
     private function _importCsv($filePath){
         $csvData = $this->parseCsvFile($filePath);
 
+        $this->importedCount = 0;
         $invalidLines = array();
         foreach ($csvData as $key => $value) {
             if (count($value['data']) !== count($this->fields)) {
@@ -171,6 +173,8 @@ class ImporterBehavior extends ModelBehavior {
                 $invalidLines[$key + 1] = array('message' => __('Yacsv: Invalid Line Format'),
                                                 'validationErrors' => $this->model->validationErrors,
                                                 'line' => $value['line']);
+            } else {
+                ++$this->importedCount;
             }
         }
         if (!@unlink($filePath)) {
@@ -239,5 +243,14 @@ class ImporterBehavior extends ModelBehavior {
             $csvData[$i] = str_replace($e . $e, $e, $csvData[$i]);
         }
         return empty($line) ? false : array('data' => $csvData, 'line' => $line);
+    }
+
+    /**
+     * return import success count
+     *
+     * @return integer
+     */
+    public function getImportedCount() {
+        return $this->importedCount;
     }
 }
