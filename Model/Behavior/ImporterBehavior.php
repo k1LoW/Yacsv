@@ -39,29 +39,29 @@ class ImporterBehavior extends ModelBehavior {
 
         $importFilterArgs = $model->importFilterArgs;
         if (empty($importFilterArgs)) {
-            throw new YacsvException(__('Yacsv: Invalid Settings'));
+            throw new YacsvException(__d('Yacsv', 'Yacsv: Invalid Settings'));
         }
         foreach ($importFilterArgs as $value) {
             $csvField = $value['name'];
             if (!empty($data[$model->alias][$csvField])) {
                 if ($data[$model->alias][$csvField]['error'] !== UPLOAD_ERR_OK) {
                     if ($data[$model->alias][$csvField]['error'] === UPLOAD_ERR_NO_FILE) {
-                        $model->invalidate($csvField, __('Yacsv: No Upload CSV'));
+                        $model->invalidate($csvField, __d('Yacsv', 'Yacsv: No Upload CSV'));
                     }
-                    throw new YacsvException(__('Yacsv: CSV Import Error'));
+                    throw new YacsvException(__d('Yacsv', 'Yacsv: CSV Import Error'));
                 }
 
                 $tmpFile = $data[$model->alias][$csvField]['tmp_name'];
 
                 if (!is_uploaded_file($tmpFile)) {
-                    throw new YacsvException(__('Yacsv: CSV Import Error'));
+                    throw new YacsvException(__d('Yacsv', 'Yacsv: CSV Import Error'));
                 }
 
                 // check extension
                 if (!empty($this->options['allowExtension'])) {
                     $regexp  =  '/\.(' . implode('|', (array) $this->options['allowExtension']) . ')$/i';
                     if (!preg_match($regexp, $data[$model->alias][$csvField]['name'])) {
-                        throw new YacsvException(__('Yacsv: Invalid Extension'));
+                        throw new YacsvException(__d('Yacsv', 'Yacsv: Invalid Extension'));
                     }
                 }
 
@@ -83,7 +83,7 @@ class ImporterBehavior extends ModelBehavior {
                         }
                         $this->model->rollback();
                         $this->model->importValidationErrors = $result;
-                        throw new YacsvException(__('Yacsv: CSV Import Error'));
+                        throw new YacsvException(__d('Yacsv', 'Yacsv: CSV Import Error'));
                     }
                 } catch (Exception $e) {
                     $this->model->rollback();
@@ -128,7 +128,7 @@ class ImporterBehavior extends ModelBehavior {
                 }
                 $this->model->rollback();
                 $this->model->importValidationErrors = $result;
-                throw new YacsvException(__('Yacsv: CSV Import Error'));
+                throw new YacsvException(__d('Yacsv', 'Yacsv: CSV Import Error'));
             }
         } catch (Exception $e) {
             $this->model->rollback();
@@ -148,7 +148,7 @@ class ImporterBehavior extends ModelBehavior {
         $invalidLines = array();
         foreach ($csvData as $key => $value) {
             if (count($value['data']) !== count($this->fields)) {
-                $invalidLines[$key + 1] = array('message' => __('Yacsv: Invalid Line Format'),
+                $invalidLines[$key + 1] = array('message' => __d('Yacsv', 'Yacsv: Invalid Line Format'),
                                                 'validationErrors' => array(),
                                                 'line' => $value['line']);
                 continue;
@@ -163,14 +163,14 @@ class ImporterBehavior extends ModelBehavior {
                 try {
                     $result = call_user_func_array($this->options['saveMethod'], array($data));
                 } catch (Exception $e) {
-                    $invalidLines[$key + 1] = array('message' => __('Yacsv: Invalid Line Format'),
+                    $invalidLines[$key + 1] = array('message' => __d('Yacsv', 'Yacsv: Invalid Line Format'),
                                                     'validationErrors' => $this->model->validationErrors,
                                                     'line' => $value['line']);
                     $result = false;
                 }
             }
             if ($result === false) {
-                $invalidLines[$key + 1] = array('message' => __('Yacsv: Invalid Line Format'),
+                $invalidLines[$key + 1] = array('message' => __d('Yacsv', 'Yacsv: Invalid Line Format'),
                                                 'validationErrors' => $this->model->validationErrors,
                                                 'line' => $value['line']);
             } else {
@@ -178,7 +178,7 @@ class ImporterBehavior extends ModelBehavior {
             }
         }
         if (!@unlink($filePath)) {
-            throw new YacsvException(__('Yacsv: Temp File Remove Error'));
+            throw new YacsvException(__d('Yacsv', 'Yacsv: Temp File Remove Error'));
         }
         if (!empty($invalidLines)) {
             return $invalidLines;
