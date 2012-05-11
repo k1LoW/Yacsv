@@ -111,6 +111,7 @@ class ImporterBehavior extends ModelBehavior {
                           'forceImport' => false,
                           'saveMethod' => false,
                           'allowExtension' => false,
+                          'removeFile' => true,
                           );
         $this->options = array_merge($defaults, $options);
 
@@ -177,7 +178,7 @@ class ImporterBehavior extends ModelBehavior {
                 ++$this->importedCount;
             }
         }
-        if (!@unlink($filePath)) {
+        if (!empty($this->options['removeFile']) && !@unlink($filePath)) {
             throw new YacsvException(__d('Yacsv', 'Yacsv: Temp File Remove Error'));
         }
         if (!empty($invalidLines)) {
