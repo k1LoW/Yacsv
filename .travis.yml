@@ -100,6 +100,3 @@ before_script:
 script:
   - cd ./cakephp
   - ./lib/Cake/Console/cake test Yacsv Model/Behavior/ImporterBehavior --stderr
-
-notifications:
-  email: false
