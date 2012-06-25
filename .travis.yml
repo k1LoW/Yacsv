@@ -96,5 +96,7 @@ before_script:
       }
     }
     }" > cakephp/app/Config/database.php
+  - cd ./cakephp
+
 script:
-  - ./cakephp/lib/Cake/Console/cake test Yacsv Model/Behavior/ImporterBehavior --stderr
+  - ./lib/Cake/Console/cake test Yacsv Model/Behavior/ImporterBehavior --stderr
