@@ -13,6 +13,12 @@ before_script:
   - mv cakephp-cakephp-* ./cakephp
   - chmod -R 777 ./cakephp/app/tmp
   - echo "<?php
+    App::build(array(
+    'Plugin' => array(dirname(__FILE__) . DS . '../../../'),
+    ));
+    CakePlugin::loadAll();
+    " > cakephp/app/Config/bootstrap.php
+  - echo "<?php
     class DATABASE_CONFIG {
     private \$identities = array(
       'mysql' => array(
@@ -90,12 +96,6 @@ before_script:
       }
     }
     }" > cakephp/app/Config/database.php
-  - echo "<?php
-    App::build(array(
-    'Plugin' => array(dirname(__FILE__) . DS . '../../../'),
-    ));
-    CakePlugin::loadAll();
-    " > cakephp/app/Config/bootstrap.php
 
 script:
   - cd ./cakephp
