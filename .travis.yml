@@ -44,4 +44,4 @@ before_script:
   - cd ./cakephp
 
 script:
-  - ./lib/Cake/Console/cake test Yacsv Model/Behavior/ImporterBehavior --stderr
+  - ./lib/Cake/Console/cake test Yacsv ./../Yacsv/Test/CaseModel/Behavior/ImporterBehavior --stderr
