@@ -40,6 +40,7 @@ before_script:
       'encoding' => 'utf8'
     );
     }" > cakephp/app/Config/database.php
+  - cat cakephp/app/Config/bootstrap.php
   - cd ./cakephp
 
 script:
