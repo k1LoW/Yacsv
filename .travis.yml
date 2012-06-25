@@ -98,7 +98,7 @@ before_script:
     " > cakephp/app/Config/bootstrap.php
 
 script:
-  - cd cakephp
+  - cd ./cakephp
   - ./lib/Cake/Console/cake test Yacsv Model/Behavior/ImporterBehavior --stderr
 
 notifications:
