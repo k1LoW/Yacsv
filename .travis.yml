@@ -90,11 +90,11 @@ before_script:
       }
     }
     }" > cakephp/app/Config/database.php
-- echo "<?php
-  App::build(array(
-  'Plugin' => array(dirname(__FILE__) . DS . '../../../'),
-  ));
-  CakePlugin::loadAll();
+  - echo "<?php
+    App::build(array(
+    'Plugin' => array(dirname(__FILE__) . DS . '../../../'),
+    ));
+    CakePlugin::loadAll();
     " > cakephp/app/Config/bootstrap.php
 
 script:
