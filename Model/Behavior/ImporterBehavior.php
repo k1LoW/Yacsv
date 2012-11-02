@@ -5,37 +5,44 @@ App::uses('YacsvException', 'Yacsv.Error');
 class ImporterBehavior extends ModelBehavior {
 
     private $model;
-    private $options;
+    private $options = array('csvEncoding' => 'SJIS-win',
+                             'hasHeader' => false,
+                             'skipHeaderCount' => 1,
+                             'delimiter' => ',',
+                             'enclosure' => '"',
+                             'forceImport' => false,
+                             'saveMethod' => false,
+                             'allowExtension' => false,
+                             );
+
     private $importedCount = 0;
 
     /**
      * setUp
      *
      */
-    public function setUp(&$model, $settings = array()){
+    public function setUp(Model $model, $settings = array()){
         $defaults = array();
         $settings = array_merge($defaults, $settings);
         $this->settings[$model->alias] = $settings;
     }
 
     /**
+     * setOptions
+     *
+     */
+    public function setOptions(Model $model,  $options = array()){
+        $this->options = array_merge($this->options, $options);
+    }
+
+    /**
      * importCsv
      *
-     * @param $arg
      */
-    public function importCsv(&$model, $data = null, $options = array()){
+    public function importCsv(Model $model, $data = null, $options = array()){
         $this->model = $model;
         $this->fields = $model->importFields;
-        $defaults = array('csvEncoding' => 'SJIS-win',
-                          'hasHeader' => false,
-                          'skipHeaderCount' => 1,
-                          'delimiter' => ',',
-                          'enclosure' => '"',
-                          'forceImport' => false,
-                          'saveMethod' => false,
-                          'allowExtension' => false,
-                          );
-        $this->options = array_merge($defaults, $options);
+        $this->setOptions($model, $options);
 
         $importFilterArgs = $model->importFilterArgs;
         if (empty($importFilterArgs)) {
@@ -98,22 +105,11 @@ class ImporterBehavior extends ModelBehavior {
     /**
      * importCsvFromFile
      *
-     * @param $filePath
      */
-    public function importCsvFromFile(&$model, $filePath, $options = array()){
+    public function importCsvFromFile(Model $model, $filePath, $options = array()){
         $this->model = $model;
         $this->fields = $model->importFields;
-        $defaults = array('csvEncoding' => 'SJIS-win',
-                          'hasHeader' => false,
-                          'skipHeaderCount' => 1,
-                          'delimiter' => ',',
-                          'enclosure' => '"',
-                          'forceImport' => false,
-                          'saveMethod' => false,
-                          'allowExtension' => false,
-                          'removeFile' => true,
-                          );
-        $this->options = array_merge($defaults, $options);
+        $this->setOptions($model, $options);
 
         try {
             $this->model->begin();
@@ -140,10 +136,9 @@ class ImporterBehavior extends ModelBehavior {
     /**
      * _importCsv
      *
-     * @param $filePath
      */
     private function _importCsv($filePath){
-        $csvData = $this->parseCsvFile($filePath);
+        $csvData = $this->parseCsvFile($this->model, $filePath);
 
         $this->importedCount = 0;
         $invalidLines = array();
@@ -190,9 +185,8 @@ class ImporterBehavior extends ModelBehavior {
     /**
      * parseCsvFile
      *
-     * @param $arg
      */
-    public function parseCsvFile($filePath){
+    public function parseCsvFile(Model $model, $filePath){
         try {
             $csvData = array();
             $handle = fopen($filePath, "r");
