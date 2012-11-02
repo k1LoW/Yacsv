@@ -28,10 +28,10 @@ class ImporterBehavior extends ModelBehavior {
     }
 
     /**
-     * setOptions
+     * setCsvOptions
      *
      */
-    public function setOptions(Model $model,  $options = array()){
+    public function setCsvOptions(Model $model,  $options = array()){
         $this->options = array_merge($this->options, $options);
     }
 
