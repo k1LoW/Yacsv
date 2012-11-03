@@ -1,6 +1,7 @@
 <?php
 
 App::uses('YacsvException', 'Yacsv.Error');
+App::uses('CsvParse', 'Yacsv.Lib');
 
 class ImporterBehavior extends ModelBehavior {
 
@@ -16,6 +17,7 @@ class ImporterBehavior extends ModelBehavior {
                              );
 
     private $importedCount = 0;
+    private $maxColumnCount = 0;
 
     /**
      * setUp
@@ -109,7 +111,7 @@ class ImporterBehavior extends ModelBehavior {
     public function importCsvFromFile(Model $model, $filePath, $options = array()){
         $this->model = $model;
         $this->fields = $model->importFields;
-        $this->setOptions($model, $options);
+        $this->setCsvOptions($model, $options);
 
         try {
             $this->model->begin();
@@ -186,13 +188,25 @@ class ImporterBehavior extends ModelBehavior {
      * parseCsvFile
      *
      */
-    public function parseCsvFile(Model $model, $filePath){
+    public function parseCsvFile(Model $model, $filePath, $dataLimit = -1){
+        $dataCount = 0;
+        $d = preg_quote($this->options['delimiter']);
+        $e = preg_quote($this->options['enclosure']);
         try {
             $csvData = array();
             $handle = fopen($filePath, "r");
-            while (($result = $this->_parseCsvLine($handle)) !== false) {
+            while (($result = CsvParse::parseCsvLine($handle, $d, $e)) !== false) {
                 mb_convert_variables(Configure::read('App.encoding'), $this->options['csvEncoding'], $result);
                 $csvData[] = $result;
+                $dataCount++;
+                $columnCount = count($result);
+                if ($columnCount > $this->maxColumnCount) {
+                    // Update maxColumnCount
+                    $this->maxColumnCount = $columnCount;
+                }
+                if ($dataLimit > 0 && $dataCount >= $dataLimit) {
+                    return $csvData;
+                }
             }
             if ($this->options['hasHeader']) {
                 for ($i = 0; $i < $this->options['skipHeaderCount']; ++$i) {
@@ -208,44 +222,20 @@ class ImporterBehavior extends ModelBehavior {
     }
 
     /**
-     * _parseCsvLine
-     * @author yossy
-     * @see http://yossy.iimp.jp/wp/?p=56
-     * @param $line
-     */
-    private function _parseCsvLine($handle){
-        $d = preg_quote($this->options['delimiter']);
-        $e = preg_quote($this->options['enclosure']);
-        $line = "";
-        $eof = false;
-        while (($eof != true) && (!feof($handle))) {
-            $line .= (empty($length) ? fgets($handle) : fgets($handle, $length));
-            $itemcnt = preg_match_all('/' . $e . '/', $line, $dummy);
-            if ($itemcnt % 2 == 0) $eof = true;
-        }
-        // for TSV
-        if (strlen($d) === strlen(trim($d))) {
-            $line = trim($line);
-        } else {
-            $line = preg_replace('/(\r\n|[\r\n])$/', '', $line);
-        }
-        $csvLine = preg_replace('/(?:\\r\\n|[\\r\\n])?$/', $d, $line);
-        $pattern = '/(' . $e . '[^' . $e . ']*(?:' . $e . $e . '[^' . $e . ']*)*' . $e . '|[^' . $d . ']*)' . $d . '/';
-        preg_match_all($pattern, $csvLine, $matches);
-        $csvData = $matches[1];
-        for($i = 0; $i < count($csvData); $i++){
-            $csvData[$i] = preg_replace('/^' . $e . '(.*)' . $e . '$/s','$1', $csvData[$i]);
-            $csvData[$i] = str_replace($e . $e, $e, $csvData[$i]);
-        }
-        return empty($line) ? false : array('data' => $csvData, 'line' => $line);
-    }
-
-    /**
      * return import success count
      *
      * @return integer
      */
     public function getImportedCount() {
         return $this->importedCount;
+    }
+
+    /**
+     * return max cell count
+     *
+     * @return integer
+     */
+    public function getMaxColumnCount() {
+        return $this->maxColumnCount;
     }
 }
