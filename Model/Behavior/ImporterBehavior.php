@@ -1,7 +1,7 @@
 <?php
 
 App::uses('YacsvException', 'Yacsv.Error');
-App::uses('CsvParse', 'Yacsv.Lib');
+App::uses('CsvParser', 'Yacsv.Lib');
 
 class ImporterBehavior extends ModelBehavior {
 
@@ -14,6 +14,7 @@ class ImporterBehavior extends ModelBehavior {
                              'forceImport' => false,
                              'saveMethod' => false,
                              'allowExtension' => false,
+                             'parseLimit' => false,
                              );
 
     private $importedCount = 0;
@@ -188,14 +189,15 @@ class ImporterBehavior extends ModelBehavior {
      * parseCsvFile
      *
      */
-    public function parseCsvFile(Model $model, $filePath, $dataLimit = -1){
+    public function parseCsvFile(Model $model, $filePath){
         $dataCount = 0;
         $d = preg_quote($this->options['delimiter']);
         $e = preg_quote($this->options['enclosure']);
+        $parseLimit = $this->options['parseLimit'];
         try {
             $csvData = array();
             $handle = fopen($filePath, "r");
-            while (($result = CsvParse::parseCsvLine($handle, $d, $e)) !== false) {
+            while (($result = CsvParser::parseCsvLine($handle, $d, $e)) !== false) {
                 mb_convert_variables(Configure::read('App.encoding'), $this->options['csvEncoding'], $result);
                 $csvData[] = $result;
                 $dataCount++;
@@ -204,7 +206,7 @@ class ImporterBehavior extends ModelBehavior {
                     // Update maxColumnCount
                     $this->maxColumnCount = $columnCount;
                 }
-                if ($dataLimit > 0 && $dataCount >= $dataLimit) {
+                if ($parseLimit && $dataCount >= $parseLimit) {
                     return $csvData;
                 }
             }

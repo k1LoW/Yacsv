@@ -1,6 +1,6 @@
 <?php
 
-class CsvParse {
+class CsvParser {
 
     /**
      * parseCsvLine
