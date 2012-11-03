@@ -41,7 +41,7 @@ class ImporterBehaviorTest extends CakeTestCase {
 	 */
 	private function _makeDummyCsv($data) {
 		$this->csvFile = TMP . 'importer_' . uniqid() . '.csv';
-		
+
 		$fp = fopen($this->csvFile, 'w');
 		foreach ($data as $d) {
 			fwrite($fp, $d . "\n");

@@ -10,7 +10,7 @@ class ImporterFixture extends CakeTestFixture {
 		'id' => array('type' => 'integer', 'key' => 'primary'),
 		'name' => array('type' => 'text'),
 		'country' => array('type' => 'text'),
-		'created' => array('type' => 'timestamp'),
+		'created' => array('type' => 'datetime'),
 	);
 
 	public $records = array(
