@@ -6,16 +6,17 @@ App::uses('CsvParser', 'Yacsv.Lib');
 class ImporterBehavior extends ModelBehavior {
 
     private $model;
-    private $options = array('csvEncoding' => 'SJIS-win',
-                             'hasHeader' => false,
-                             'skipHeaderCount' => 1,
-                             'delimiter' => ',',
-                             'enclosure' => '"',
-                             'forceImport' => false,
-                             'saveMethod' => false,
-                             'allowExtension' => false,
-                             'parseLimit' => false,
-                             );
+    private $options = array(
+        'csvEncoding' => 'SJIS-win',
+        'hasHeader' => false,
+        'skipHeaderCount' => 1,
+        'delimiter' => ',',
+        'enclosure' => '"',
+        'forceImport' => false,
+        'saveMethod' => false,
+        'allowExtension' => false,
+        'parseLimit' => false,
+    );
 
     private $importedCount = 0;
     private $maxColumnCount = 0;
@@ -148,9 +149,10 @@ class ImporterBehavior extends ModelBehavior {
         $invalidLines = array();
         foreach ($csvData as $key => $value) {
             if (count($value['data']) !== count($this->fields)) {
-                $invalidLines[$key + 1] = array('message' => __d('Yacsv', 'Yacsv: Invalid Line Format'),
-                                                'validationErrors' => array(),
-                                                'line' => $value['line']);
+                $invalidLines[$key + 1] = array(
+                    'message' => __d('Yacsv', 'Yacsv: Invalid Line Format'),
+                    'validationErrors' => array(),
+                    'line' => $value['line']);
                 continue;
             }
 
@@ -163,16 +165,18 @@ class ImporterBehavior extends ModelBehavior {
                 try {
                     $result = call_user_func_array($this->options['saveMethod'], array($data));
                 } catch (Exception $e) {
-                    $invalidLines[$key + 1] = array('message' => __d('Yacsv', 'Yacsv: Invalid Line Format'),
-                                                    'validationErrors' => $this->model->validationErrors,
-                                                    'line' => $value['line']);
+                    $invalidLines[$key + 1] = array(
+                        'message' => __d('Yacsv', 'Yacsv: Invalid Line Format'),
+                        'validationErrors' => $this->model->validationErrors,
+                        'line' => $value['line']);
                     $result = false;
                 }
             }
             if ($result === false) {
-                $invalidLines[$key + 1] = array('message' => __d('Yacsv', 'Yacsv: Invalid Line Format'),
-                                                'validationErrors' => $this->model->validationErrors,
-                                                'line' => $value['line']);
+                $invalidLines[$key + 1] = array(
+                    'message' => __d('Yacsv', 'Yacsv: Invalid Line Format'),
+                    'validationErrors' => $this->model->validationErrors,
+                    'line' => $value['line']);
             } else {
                 ++$this->importedCount;
             }
