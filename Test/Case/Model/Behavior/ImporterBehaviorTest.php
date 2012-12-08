@@ -100,6 +100,53 @@ class ImporterBehaviorTest extends CakeTestCase {
 			),
 		);
 
+		// enclosure = false
+		$inputs[] = array(
+			'"Oyama","Japan"',
+			'"Suzuki","Antarctica"',
+		);
+		$csvEncoding[] = 'UTF-8';
+		$options[] = array(
+			'csvEncoding' => 'UTF-8',
+			'hasHeader' => false,
+			'delimiter' => ',',
+			'enclosure' => false,
+		);
+		$expected[] = array(
+			array(
+				'name' => '"Oyama"',
+				'country' => '"Japan"',
+			),
+			array(
+				'name' => '"Suzuki"',
+				'country' => '"Antarctica"',
+			),
+		);
+
+		// TSV
+		$inputs[] = array(
+			"Oyama\tJapan",
+			"Suzuki\tAntarctica",
+		);
+		$csvEncoding[] = 'UTF-8';
+		$options[] = array(
+			'csvEncoding' => 'UTF-8',
+			'hasHeader' => false,
+			'delimiter' => "\t",
+			'enclosure' => false,
+		);
+		$expected[] = array(
+			array(
+				'name' => 'Oyama',
+				'country' => 'Japan',
+			),
+			array(
+				'name' => 'Suzuki',
+				'country' => 'Antarctica',
+			),
+		);
+
+		// has HEADER
 		$inputs[] = array(
 			'"NAME","COUNTRY"', // HEADER LINE
 			'"Oyama","Japan"',
@@ -213,6 +260,7 @@ class ImporterBehaviorTest extends CakeTestCase {
 			),
 		);
 
+		// csv encoding
 		$inputs[] = array(
 			'"Oyama","日本"',
 			'"Suzuki","南極大陸"',
