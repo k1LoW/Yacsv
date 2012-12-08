@@ -308,6 +308,56 @@ class ImporterBehaviorTest extends CakeTestCase {
 			),
 		);
 
+		// csv auto detect delimiter
+		$inputs[] = array(
+			'"NAME","COUNTRY"', // HEADER
+			'"Oyama","日本"',
+			'"Suzuki","南極大陸"',
+		);
+		$csvEncoding[] = 'SJIS-win';
+		$options[] = array(
+			'csvEncoding' => 'auto',
+			'hasHeader' => true,
+			'delimiter' => 'auto',
+			'enclosure' => '"',
+			'skipHeaderCount' => 1,
+		);
+		$expected[] = array(
+			array(
+				'name' => 'Oyama',
+				'country' => '日本',
+			),
+			array(
+				'name' => 'Suzuki',
+				'country' => '南極大陸',
+			),
+		);
+
+		// csv auto detect enclosure
+		$inputs[] = array(
+			'NAME,COUNTRY', // HEADER
+			'"Oyama","日本"',
+			'"Suzuki",南極大陸',
+		);
+		$csvEncoding[] = 'SJIS-win';
+		$options[] = array(
+			'csvEncoding' => 'auto',
+			'hasHeader' => true,
+			'delimiter' => ',',
+			'enclosure' => 'auto',
+			'skipHeaderCount' => 1,
+		);
+		$expected[] = array(
+			array(
+				'name' => 'Oyama',
+				'country' => '日本',
+			),
+			array(
+				'name' => 'Suzuki',
+				'country' => '南極大陸',
+			),
+		);
+
 		$data = array();
 		for($i = 0; $i < count($inputs); ++$i) {
 			$data[] = array($inputs[$i], $csvEncoding[$i], $options[$i], $expected[$i]);

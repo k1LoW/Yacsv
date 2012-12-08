@@ -19,6 +19,8 @@ class ImporterBehavior extends ModelBehavior {
 
     private $importedCount = 0;
     private $maxColumnCount = 0;
+    const AUTO = 'auto';
+    const DETECT_SAMPLE_COUNT = 3;
 
     /**
      * setUp
@@ -195,7 +197,19 @@ class ImporterBehavior extends ModelBehavior {
         $parseLimit = $this->options['parseLimit'];
         $csvEncoding = $this->options['csvEncoding'];
 
-        if ($csvEncoding === 'auto') {
+        if ($d === self::AUTO) {
+            // detect delimiter
+            $d = $this->detectDelimiterFromFile($filePath);
+            $this->options['delimiter'] = $d;
+        }
+
+        if ($e === self::AUTO) {
+            // detect enclosure
+            $e = $this->detectEnclosureFromFile($filePath);
+            $this->options['enclosure'] = $e;
+        }
+
+        if ($csvEncoding === self::AUTO) {
             // detect encoding
             $csvEncoding = $this->detectEncodingFromFile($filePath);
         }
@@ -229,15 +243,96 @@ class ImporterBehavior extends ModelBehavior {
     }
 
     /**
+     * detectDelimiterFromFile
+     *
+     * @param $filePath
+     */
+    public function detectDelimiterFromFile($filePath){
+        $dataCount = 0;
+        $parseLimit = self::DETECT_SAMPLE_COUNT;
+        $candidates = array(',', "\t", ';', ' ');
+
+        // for skip header
+        if ($this->options['hasHeader']) {
+            $parseLimit += $this->options['skipHeaderCount'];
+        }
+
+        $handle = fopen($filePath, "r");
+        $results = array();
+        while ($line = fgets($handle)) {
+            $dataCount++;
+            if ($dataCount > $parseLimit) {
+                break;
+            }
+            foreach ($candidates as $candidate) {
+                if (empty($results[$candidate])) {
+                    $results[$candidate] = array();
+                }
+                $results[$candidate][] = count(explode($candidate, $line));
+            }
+        }
+        fclose($handle);
+        foreach ($results as $candidate => $value) {
+            $fliped = array_flip($value);
+            if (count($fliped) !== 1) {
+                unset($results[$candidate]);
+                continue;
+            }
+            $results[$candidate] = key($fliped);
+        }
+        arsort($results, SORT_NUMERIC);
+        return key($results);
+    }
+
+    /**
+     * detectEnclosureFromFile
+     *
+     * @param $filePath
+     */
+    public function detectEnclosureFromFile($filePath){
+        $dataCount = 0;
+        $parseLimit = self::DETECT_SAMPLE_COUNT;
+        $candidates = array('"', "'");
+
+        // for skip header
+        if ($this->options['hasHeader']) {
+            $parseLimit += $this->options['skipHeaderCount'];
+        }
+
+        $handle = fopen($filePath, "r");
+        $results = array();
+        while ($line = fgets($handle)) {
+            $dataCount++;
+            if ($dataCount > $parseLimit) {
+                break;
+            }
+            foreach ($candidates as $candidate) {
+                $count = preg_match_all('/' . $candidate . '/', $line, $dummy);
+                if ($count === 0 || $count % 2 !== 0) {
+                    continue;
+                }
+                if (empty($results[$candidate])) {
+                    $results[$candidate] = 0;
+                }
+                $results[$candidate]++;
+            }
+        }
+        fclose($handle);
+
+        arsort($results, SORT_NUMERIC);
+        return key($results);
+    }
+
+    /**
      * detectEncodingFromFile
      *
      * @param $filePath
      */
     public function detectEncodingFromFile($filePath){
         $dataCount = 0;
+        $parseLimit = 0;
         $d = preg_quote($this->options['delimiter']);
         $e = preg_quote($this->options['enclosure']);
-        $parseLimit = 0;
 
         // for skip header
         if ($this->options['hasHeader']) {
@@ -262,7 +357,7 @@ class ImporterBehavior extends ModelBehavior {
                 if (preg_replace('/\A([\x00-\x1a\x1c-\x7f]|\x1b\x24[\x40\x42](?:[\x21-\x7e][\x21-\x7e])+|\x1b\x24\x28[\x40\x42\x44](?:[\x21-\x7e][\x21-\x7e])+|\x1b\x28\x42|\x1b\x28\x4a[\x00-\x1a\x1c-\x7f]+|\x1b\x28\x49[\x00-\x1a\x1c-\x7f]+\x1b\x28\x42)*\z/', '', $result['line']) === '') {
                     return 'ISO-2022-JP-MS';
                 }
-                return mb_detect_encoding($result['line'], array('UTF-8', 'eucJP-win', 'SJIS-win', 'ISO-2022-JP-MS'));
+                return mb_detect_encoding($result['line'], array('UTF-8', 'eucJP-win', 'SJIS-win', 'ISO-2022-JP'));
             }
         }
     }
