@@ -283,6 +283,31 @@ class ImporterBehaviorTest extends CakeTestCase {
 			),
 		);
 
+		// csv auto detect encoding
+		$inputs[] = array(
+			'"NAME","COUNTRY"', // HEADER
+			'"Oyama","日本"',
+			'"Suzuki","南極大陸"',
+		);
+		$csvEncoding[] = 'SJIS-win';
+		$options[] = array(
+			'csvEncoding' => 'auto',
+			'hasHeader' => true,
+			'delimiter' => ',',
+			'enclosure' => '"',
+			'skipHeaderCount' => 1,
+		);
+		$expected[] = array(
+			array(
+				'name' => 'Oyama',
+				'country' => '日本',
+			),
+			array(
+				'name' => 'Suzuki',
+				'country' => '南極大陸',
+			),
+		);
+
 		$data = array();
 		for($i = 0; $i < count($inputs); ++$i) {
 			$data[] = array($inputs[$i], $csvEncoding[$i], $options[$i], $expected[$i]);

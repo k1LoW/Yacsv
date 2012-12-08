@@ -142,7 +142,6 @@ class ImporterBehavior extends ModelBehavior {
      */
     private function _importCsv($filePath){
         $csvData = $this->parseCsvFile($this->model, $filePath);
-
         $this->importedCount = 0;
         $invalidLines = array();
         foreach ($csvData as $key => $value) {
@@ -194,11 +193,18 @@ class ImporterBehavior extends ModelBehavior {
         $d = preg_quote($this->options['delimiter']);
         $e = preg_quote($this->options['enclosure']);
         $parseLimit = $this->options['parseLimit'];
+        $csvEncoding = $this->options['csvEncoding'];
+
+        if ($csvEncoding === 'auto') {
+            // detect encoding
+            $csvEncoding = $this->detectEncodingFromFile($filePath);
+        }
+
         try {
             $csvData = array();
             $handle = fopen($filePath, "r");
             while (($result = CsvParser::parseCsvLine($handle, $d, $e)) !== false) {
-                mb_convert_variables(Configure::read('App.encoding'), $this->options['csvEncoding'], $result);
+                mb_convert_variables(Configure::read('App.encoding'), $csvEncoding, $result);
                 $csvData[] = $result;
                 $dataCount++;
                 $columnCount = count($result);
@@ -219,8 +225,46 @@ class ImporterBehavior extends ModelBehavior {
         } catch (Exception $e){
             throw new YacsvException($e->getMessage());
         }
-
         return $csvData;
+    }
+
+    /**
+     * detectEncodingFromFile
+     *
+     * @param $filePath
+     */
+    public function detectEncodingFromFile($filePath){
+        $dataCount = 0;
+        $d = preg_quote($this->options['delimiter']);
+        $e = preg_quote($this->options['enclosure']);
+        $parseLimit = 0;
+
+        // for skip header
+        if ($this->options['hasHeader']) {
+            $parseLimit = $this->options['skipHeaderCount'];
+        }
+
+        $handle = fopen($filePath, "r");
+        while (($result = CsvParser::parseCsvLine($handle, $d, $e)) !== false) {
+            $dataCount++;
+            if ($dataCount > $parseLimit) {
+                fclose($handle);
+                // @see http://d.hatena.ne.jp/t_komura/20090615/1245078430
+                if (preg_replace('/\A([\x00-\x7f]|[\xc0-\xdf][\x80-\xbf]|[\xe0-\xef][\x80-\xbf]{2}|[\xf0-\xf7][\x80-\xbf]{3}|[\xf8-\xfb][\x80-\xbf]{4}|[\xfc-\xfd][\x80-\xbf]{5})*\z/', '', $result['line']) === '') {
+                    return 'UTF-8';
+                }
+                if (preg_replace('/\A([\x00-\x7f]|[\xa1-\xdf]|[\x81-\x9f\xe0-\xfc][\x40-\x7e\x80-\xfc])*\z/', '', $result['line']) === '') {
+                    return 'SJIS-win';
+                }
+                if (preg_replace('/\A([\x00-\x7f]|[\xa1-\xfe][\xa1-\xfe]|\x8e[\xa1-\xdf]|\x8f[\xa1-\xfe][\xa1-\xfe])*\z/', '', $result['line']) === '') {
+                    return 'eucJP-win';
+                }
+                if (preg_replace('/\A([\x00-\x1a\x1c-\x7f]|\x1b\x24[\x40\x42](?:[\x21-\x7e][\x21-\x7e])+|\x1b\x24\x28[\x40\x42\x44](?:[\x21-\x7e][\x21-\x7e])+|\x1b\x28\x42|\x1b\x28\x4a[\x00-\x1a\x1c-\x7f]+|\x1b\x28\x49[\x00-\x1a\x1c-\x7f]+\x1b\x28\x42)*\z/', '', $result['line']) === '') {
+                    return 'ISO-2022-JP-MS';
+                }
+                return mb_detect_encoding($result['line'], array('UTF-8', 'eucJP-win', 'SJIS-win', 'ISO-2022-JP-MS'));
+            }
+        }
     }
 
     /**
