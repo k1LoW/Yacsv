@@ -39,12 +39,12 @@ class ImporterBehaviorTest extends CakeTestCase {
 	 * make CSV file for test
 	 *
 	 */
-	private function _makeDummyCsv($data) {
-		$this->csvFile = TMP . 'importer_' . uniqid() . '.csv';
+	private function _makeDummyCsv($data, $csvEncoding = 'UTF-8') {
+		$this->csvFile = TMP . uniqid('importer_') . '.csv';
 
 		$fp = fopen($this->csvFile, 'w');
 		foreach ($data as $d) {
-			fwrite($fp, $d . "\n");
+			fwrite($fp, mb_convert_encoding($d . "\n", $csvEncoding));
 		}
 		fclose($fp);
 
@@ -55,16 +55,9 @@ class ImporterBehaviorTest extends CakeTestCase {
 	 * @dataProvider csvDataProvider
 	 *
 	 */
-	public function testImportCsvFromFile($data, $expected) {
+	public function testImportCsvFromFile($data, $csvEncoding, $options, $expected) {
 
-		$csvFile = $this->_makeDummyCsv($data);
-
-		$options = array(
-			'csvEncoding' => 'UTF-8',
-			'hasHeader' => false,
-			'delimiter' => ',',
-			'enclosure' => '"',
-		);
+		$csvFile = $this->_makeDummyCsv($data, $csvEncoding);
 
 		$result = $this->Importer->importCsvFromFile($csvFile, $options);
 		$this->assertTrue($result);
@@ -89,6 +82,13 @@ class ImporterBehaviorTest extends CakeTestCase {
 			'"Oyama","Japan"',
 			'"Suzuki","Antarctica"',
 		);
+		$csvEncoding[] = 'UTF-8';
+		$options[] = array(
+			'csvEncoding' => 'UTF-8',
+			'hasHeader' => false,
+			'delimiter' => ',',
+			'enclosure' => '"',
+		);
 		$expected[] = array(
 			array(
 				'name' => 'Oyama',
@@ -105,68 +105,13 @@ class ImporterBehaviorTest extends CakeTestCase {
 			'"Oyama","Japan"',
 			'"Suzuki","Antarctica"',
 		);
-		$expected[] = array(
-			array(
-				'name' => 'NAME',
-				'country' => 'COUNTRY',
-			),
-			array(
-				'name' => 'Oyama',
-				'country' => 'Japan',
-			),
-			array(
-				'name' => 'Suzuki',
-				'country' => 'Antarctica',
-			),
-		);
-
-		$data = array();
-		for($i = 0; $i < count($inputs); ++$i) {
-			$data[] = array($inputs[$i], $expected[$i]);
-		}
-
-		return $data;
-	}
-
-
-
-	/**
-	 * test for importCsbFromFile() with hasHeader option
-	 * @dataProvider csvDataProviderWithHeader
-	 */
-	public function testImportCsvFromFileWithHeader($data, $expected, $skipcount) {
-		$csvFile = $this->_makeDummyCsv($data);
-
-		$options = array(
+		$csvEncoding[] = 'UTF-8';
+		$options[] = array(
 			'csvEncoding' => 'UTF-8',
 			'hasHeader' => true,
-			'skipHeaderCount' => $skipcount,
 			'delimiter' => ',',
 			'enclosure' => '"',
 		);
-
-		$result = $this->Importer->importCsvFromFile($csvFile, $options);
-		$this->assertTrue($result);
-
-		$results = $this->Importer->find('all');
-
-		for($i = 0; $i < count($results); ++$i) {
-			$name = $results[$i]['Importer']['name'];
-			$country = $results[$i]['Importer']['country'];
-
-			$this->assertSame($expected[$i]['name'], $name);
-			$this->assertSame($expected[$i]['country'], $country);
-		}
-	}
-
-	public function csvDataProviderWithHeader() {
-		// has a HEADER
-		$inputs[] = array(
-			'"NAME","COUNTRY"', // HEADER
-			'"Oyama","Japan"',
-			'"Suzuki","Antarctica"',
-			'"Ando",Nomad',
-		);
 		$expected[] = array(
 			array(
 				'name' => 'Oyama',
@@ -176,18 +121,20 @@ class ImporterBehaviorTest extends CakeTestCase {
 				'name' => 'Suzuki',
 				'country' => 'Antarctica',
 			),
-			array(
-				'name' => 'Ando',
-				'country' => 'Nomad'
-			),
 		);
-		$skipcount[] = 1;
 
 		// NO HEADER data, but hasHeader true
 		$inputs[] = array(
 			'"Oyama","Japan"', // NO HEADER, but skip this line
 			'"Suzuki","Antarctica"',
 			'Ando,Nomad',
+		);
+		$csvEncoding[] = 'UTF-8';
+		$options[] = array(
+			'csvEncoding' => 'UTF-8',
+			'hasHeader' => true,
+			'delimiter' => ',',
+			'enclosure' => '"',
 		);
 		$expected[] = array(
 			array(
@@ -199,7 +146,6 @@ class ImporterBehaviorTest extends CakeTestCase {
 				'country' => 'Nomad',
 			),
 		);
-		$skipcount[] = 1;
 
 		// has two HEADER , one skip
 		$inputs[] = array(
@@ -208,6 +154,14 @@ class ImporterBehaviorTest extends CakeTestCase {
 			'"Oyama","Japan"',
 			'"Suzuki","Antarctica"',
 			'"Ando",Nomad',
+		);
+		$csvEncoding[] = 'UTF-8';
+		$options[] = array(
+			'csvEncoding' => 'UTF-8',
+			'hasHeader' => true,
+			'delimiter' => ',',
+			'enclosure' => '"',
+			'skipHeaderCount' => 1,
 		);
 		$expected[] = array(
 			array(
@@ -227,7 +181,6 @@ class ImporterBehaviorTest extends CakeTestCase {
 				'country' => 'Nomad'
 			),
 		);
-		$skipcount[] = 1;
 
 		// has two HEADER , two skip
 		$inputs[] = array(
@@ -236,6 +189,14 @@ class ImporterBehaviorTest extends CakeTestCase {
 			'"Oyama","Japan"',
 			'"Suzuki","Antarctica"',
 			'"Ando",Nomad',
+		);
+		$csvEncoding[] = 'UTF-8';
+		$options[] = array(
+			'csvEncoding' => 'UTF-8',
+			'hasHeader' => true,
+			'delimiter' => ',',
+			'enclosure' => '"',
+			'skipHeaderCount' => 2,
 		);
 		$expected[] = array(
 			array(
@@ -251,17 +212,36 @@ class ImporterBehaviorTest extends CakeTestCase {
 				'country' => 'Nomad'
 			),
 		);
-		$skipcount[] = 2;
 
+		$inputs[] = array(
+			'"Oyama","日本"',
+			'"Suzuki","南極大陸"',
+		);
+		$csvEncoding[] = 'SJIS-win';
+		$options[] = array(
+			'csvEncoding' => 'SJIS-win',
+			'hasHeader' => false,
+			'delimiter' => ',',
+			'enclosure' => '"',
+		);
+		$expected[] = array(
+			array(
+				'name' => 'Oyama',
+				'country' => '日本',
+			),
+			array(
+				'name' => 'Suzuki',
+				'country' => '南極大陸',
+			),
+		);
 
 		$data = array();
 		for($i = 0; $i < count($inputs); ++$i) {
-			$data[] = array($inputs[$i], $expected[$i], $skipcount[$i]);
+			$data[] = array($inputs[$i], $csvEncoding[$i], $options[$i], $expected[$i]);
 		}
 
 		return $data;
 	}
-
 
 	/**
 	 * @dataProvider importedCountDataProvider
@@ -283,7 +263,6 @@ class ImporterBehaviorTest extends CakeTestCase {
 		$result = $this->Importer->getImportedCount();
 		$this->assertSame($expected, $result);
 	}
-
 
 	/**
 	 * dataProvider for testGetImportedCount
