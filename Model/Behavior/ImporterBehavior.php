@@ -197,16 +197,16 @@ class ImporterBehavior extends ModelBehavior {
         $parseLimit = $this->options['parseLimit'];
         $csvEncoding = $this->options['csvEncoding'];
 
-        if ($d === self::AUTO) {
-            // detect delimiter
-            $d = $this->detectDelimiterFromFile($filePath);
-            $this->options['delimiter'] = $d;
-        }
-
         if ($e === self::AUTO) {
             // detect enclosure
             $e = $this->detectEnclosureFromFile($filePath);
             $this->options['enclosure'] = $e;
+        }
+
+        if ($d === self::AUTO) {
+            // detect delimiter
+            $d = $this->detectDelimiterFromFile($filePath);
+            $this->options['delimiter'] = $d;
         }
 
         if ($csvEncoding === self::AUTO) {
@@ -250,6 +250,7 @@ class ImporterBehavior extends ModelBehavior {
     public function detectDelimiterFromFile($filePath){
         $dataCount = 0;
         $parseLimit = self::DETECT_SAMPLE_COUNT;
+        $e = $this->options['enclosure'];
         $candidates = array(',', "\t", ';', ' ');
 
         // for skip header
@@ -265,20 +266,26 @@ class ImporterBehavior extends ModelBehavior {
                 break;
             }
             foreach ($candidates as $candidate) {
+                $count = count(explode($candidate, $line));
+                if ($count === 1) {
+                    continue;
+                }
+                $exploded = explode($candidate, $line);
+                foreach ($exploded as $value) {
+                    $match = preg_match_all('/\A[^' . $e . ']+' . $e . '[^' . $e . ']+\z/', $value, $dummy);
+                    if ($match) {
+                        continue 2;
+                    }
+                }
                 if (empty($results[$candidate])) {
                     $results[$candidate] = array();
                 }
                 $results[$candidate][] = count(explode($candidate, $line));
             }
         }
-        fclose($handle);
         foreach ($results as $candidate => $value) {
             $fliped = array_flip($value);
-            if (count($fliped) !== 1) {
-                unset($results[$candidate]);
-                continue;
-            }
-            $results[$candidate] = key($fliped);
+            $results[$candidate] = count($fliped);
         }
         arsort($results, SORT_NUMERIC);
         return key($results);
