@@ -42,6 +42,14 @@ class ImporterBehavior extends ModelBehavior {
     }
 
     /**
+     * getCsvOptions
+     *
+     */
+    public function getCsvOptions(Model $model,  $options = array()){
+        return $this->options;
+    }
+
+    /**
      * importCsv
      *
      */
