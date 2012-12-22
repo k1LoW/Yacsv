@@ -224,6 +224,11 @@ class ImporterBehavior extends ModelBehavior {
         if ($csvEncoding === self::AUTO) {
             // detect encoding
             $csvEncoding = $this->detectEncodingFromFile($filePath);
+            $this->options['csvEncoding'] = $csvEncoding;
+        }
+
+        if ($this->options['hasHeader']) {
+            $parseLimit += $this->options['skipHeaderCount'];
         }
 
         try {
@@ -239,7 +244,7 @@ class ImporterBehavior extends ModelBehavior {
                     $this->maxColumnCount = $columnCount;
                 }
                 if ($parseLimit && $dataCount >= $parseLimit) {
-                    return $csvData;
+                    break;
                 }
             }
             if ($this->options['hasHeader']) {
