@@ -288,10 +288,12 @@ class ImporterBehavior extends ModelBehavior {
                     continue;
                 }
                 $exploded = explode($candidate, $line);
-                foreach ($exploded as $value) {
-                    $match = preg_match_all('/\A[^' . $e . ']+' . $e . '[^' . $e . ']+\z/', $value, $dummy);
-                    if ($match) {
-                        continue 2;
+                if ($e) {
+                    foreach ($exploded as $value) {
+                        $match = preg_match_all('/\A[^' . $e . ']+' . $e . '[^' . $e . ']+\z/', $value, $dummy);
+                        if ($match) {
+                            continue 2;
+                        }
                     }
                 }
                 if (empty($results[$candidate])) {
@@ -304,6 +306,7 @@ class ImporterBehavior extends ModelBehavior {
             $fliped = array_flip($value);
             $results[$candidate] = count($fliped);
         }
+        arsort($results, SORT_NUMERIC);
         arsort($results, SORT_NUMERIC);
         return key($results);
     }
@@ -344,6 +347,10 @@ class ImporterBehavior extends ModelBehavior {
         fclose($handle);
 
         arsort($results, SORT_NUMERIC);
+        arsort($results, SORT_NUMERIC);
+        if (empty($results)) {
+            return '';
+        }
         return key($results);
     }
 
