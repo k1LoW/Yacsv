@@ -6,19 +6,22 @@ App::uses('CsvParser', 'Yacsv.Lib');
 class ImporterBehavior extends ModelBehavior {
 
     private $model;
-    private $options = array('csvEncoding' => 'SJIS-win',
-                             'hasHeader' => false,
-                             'skipHeaderCount' => 1,
-                             'delimiter' => ',',
-                             'enclosure' => '"',
-                             'forceImport' => false,
-                             'saveMethod' => false,
-                             'allowExtension' => false,
-                             'parseLimit' => false,
-                             );
+    private $options = array(
+        'csvEncoding' => 'SJIS-win',
+        'hasHeader' => false,
+        'skipHeaderCount' => 1,
+        'delimiter' => ',',
+        'enclosure' => '"',
+        'forceImport' => false,
+        'saveMethod' => false,
+        'allowExtension' => false,
+        'parseLimit' => false,
+    );
 
     private $importedCount = 0;
     private $maxColumnCount = 0;
+    const AUTO = 'auto';
+    const DETECT_SAMPLE_COUNT = 3;
 
     /**
      * setUp
@@ -36,6 +39,14 @@ class ImporterBehavior extends ModelBehavior {
      */
     public function setCsvOptions(Model $model,  $options = array()){
         $this->options = array_merge($this->options, $options);
+    }
+
+    /**
+     * getCsvOptions
+     *
+     */
+    public function getCsvOptions(Model $model,  $options = array()){
+        return $this->options;
     }
 
     /**
@@ -142,14 +153,14 @@ class ImporterBehavior extends ModelBehavior {
      */
     private function _importCsv($filePath){
         $csvData = $this->parseCsvFile($this->model, $filePath);
-
         $this->importedCount = 0;
         $invalidLines = array();
         foreach ($csvData as $key => $value) {
             if (count($value['data']) !== count($this->fields)) {
-                $invalidLines[$key + 1] = array('message' => __d('Yacsv', 'Yacsv: Invalid Line Format'),
-                                                'validationErrors' => array(),
-                                                'line' => $value['line']);
+                $invalidLines[$key + 1] = array(
+                    'message' => __d('Yacsv', 'Yacsv: Invalid Line Format'),
+                    'validationErrors' => array(),
+                    'line' => $value['line']);
                 continue;
             }
 
@@ -162,16 +173,18 @@ class ImporterBehavior extends ModelBehavior {
                 try {
                     $result = call_user_func_array($this->options['saveMethod'], array($data));
                 } catch (Exception $e) {
-                    $invalidLines[$key + 1] = array('message' => __d('Yacsv', 'Yacsv: Invalid Line Format'),
-                                                    'validationErrors' => $this->model->validationErrors,
-                                                    'line' => $value['line']);
+                    $invalidLines[$key + 1] = array(
+                        'message' => __d('Yacsv', 'Yacsv: Invalid Line Format'),
+                        'validationErrors' => $this->model->validationErrors,
+                        'line' => $value['line']);
                     $result = false;
                 }
             }
             if ($result === false) {
-                $invalidLines[$key + 1] = array('message' => __d('Yacsv', 'Yacsv: Invalid Line Format'),
-                                                'validationErrors' => $this->model->validationErrors,
-                                                'line' => $value['line']);
+                $invalidLines[$key + 1] = array(
+                    'message' => __d('Yacsv', 'Yacsv: Invalid Line Format'),
+                    'validationErrors' => $this->model->validationErrors,
+                    'line' => $value['line']);
             } else {
                 ++$this->importedCount;
             }
@@ -194,11 +207,35 @@ class ImporterBehavior extends ModelBehavior {
         $d = preg_quote($this->options['delimiter']);
         $e = preg_quote($this->options['enclosure']);
         $parseLimit = $this->options['parseLimit'];
+        $csvEncoding = $this->options['csvEncoding'];
+
+        if ($e === self::AUTO) {
+            // detect enclosure
+            $e = $this->detectEnclosureFromFile($filePath);
+            $this->options['enclosure'] = $e;
+        }
+
+        if ($d === self::AUTO) {
+            // detect delimiter
+            $d = $this->detectDelimiterFromFile($filePath);
+            $this->options['delimiter'] = $d;
+        }
+
+        if ($csvEncoding === self::AUTO) {
+            // detect encoding
+            $csvEncoding = $this->detectEncodingFromFile($filePath);
+            $this->options['csvEncoding'] = $csvEncoding;
+        }
+
+        if ($this->options['hasHeader']) {
+            $parseLimit += $this->options['skipHeaderCount'];
+        }
+
         try {
             $csvData = array();
             $handle = fopen($filePath, "r");
             while (($result = CsvParser::parseCsvLine($handle, $d, $e)) !== false) {
-                mb_convert_variables(Configure::read('App.encoding'), $this->options['csvEncoding'], $result);
+                mb_convert_variables(Configure::read('App.encoding'), $csvEncoding, $result);
                 $csvData[] = $result;
                 $dataCount++;
                 $columnCount = count($result);
@@ -207,7 +244,7 @@ class ImporterBehavior extends ModelBehavior {
                     $this->maxColumnCount = $columnCount;
                 }
                 if ($parseLimit && $dataCount >= $parseLimit) {
-                    return $csvData;
+                    break;
                 }
             }
             if ($this->options['hasHeader']) {
@@ -219,8 +256,141 @@ class ImporterBehavior extends ModelBehavior {
         } catch (Exception $e){
             throw new YacsvException($e->getMessage());
         }
-
         return $csvData;
+    }
+
+    /**
+     * detectDelimiterFromFile
+     *
+     * @param $filePath
+     */
+    public function detectDelimiterFromFile($filePath){
+        $dataCount = 0;
+        $parseLimit = self::DETECT_SAMPLE_COUNT;
+        $e = $this->options['enclosure'];
+        $candidates = array(',', "\t", ';', ' ');
+
+        // for skip header
+        if ($this->options['hasHeader']) {
+            $parseLimit += $this->options['skipHeaderCount'];
+        }
+
+        $handle = fopen($filePath, "r");
+        $results = array();
+        while ($line = fgets($handle)) {
+            $dataCount++;
+            if ($dataCount > $parseLimit) {
+                break;
+            }
+            foreach ($candidates as $candidate) {
+                $count = count(explode($candidate, $line));
+                if ($count === 1) {
+                    continue;
+                }
+                $exploded = explode($candidate, $line);
+                if ($e) {
+                    foreach ($exploded as $value) {
+                        $match = preg_match_all('/\A[^' . $e . ']+' . $e . '[^' . $e . ']+\z/', $value, $dummy);
+                        if ($match) {
+                            continue 2;
+                        }
+                    }
+                }
+                if (empty($results[$candidate])) {
+                    $results[$candidate] = array();
+                }
+                $results[$candidate][] = count(explode($candidate, $line));
+            }
+        }
+        foreach ($results as $candidate => $value) {
+            $fliped = array_flip($value);
+            $results[$candidate] = count($fliped);
+        }
+        arsort($results, SORT_NUMERIC);
+        arsort($results, SORT_NUMERIC);
+        return key($results);
+    }
+
+    /**
+     * detectEnclosureFromFile
+     *
+     * @param $filePath
+     */
+    public function detectEnclosureFromFile($filePath){
+        $dataCount = 0;
+        $parseLimit = self::DETECT_SAMPLE_COUNT;
+        $candidates = array('"', "'");
+
+        // for skip header
+        if ($this->options['hasHeader']) {
+            $parseLimit += $this->options['skipHeaderCount'];
+        }
+
+        $handle = fopen($filePath, "r");
+        $results = array();
+        while ($line = fgets($handle)) {
+            $dataCount++;
+            if ($dataCount > $parseLimit) {
+                break;
+            }
+            foreach ($candidates as $candidate) {
+                $count = preg_match_all('/' . $candidate . '/', $line, $dummy);
+                if ($count === 0 || $count % 2 !== 0) {
+                    continue;
+                }
+                if (empty($results[$candidate])) {
+                    $results[$candidate] = 0;
+                }
+                $results[$candidate]++;
+            }
+        }
+        fclose($handle);
+
+        arsort($results, SORT_NUMERIC);
+        arsort($results, SORT_NUMERIC);
+        if (empty($results)) {
+            return '';
+        }
+        return key($results);
+    }
+
+    /**
+     * detectEncodingFromFile
+     *
+     * @param $filePath
+     */
+    public function detectEncodingFromFile($filePath){
+        $dataCount = 0;
+        $parseLimit = 0;
+        $d = preg_quote($this->options['delimiter']);
+        $e = preg_quote($this->options['enclosure']);
+
+        // for skip header
+        if ($this->options['hasHeader']) {
+            $parseLimit = $this->options['skipHeaderCount'];
+        }
+
+        $handle = fopen($filePath, "r");
+        while (($result = CsvParser::parseCsvLine($handle, $d, $e)) !== false) {
+            $dataCount++;
+            if ($dataCount > $parseLimit) {
+                fclose($handle);
+                // @see http://d.hatena.ne.jp/t_komura/20090615/1245078430
+                if (preg_replace('/\A([\x00-\x7f]|[\xc0-\xdf][\x80-\xbf]|[\xe0-\xef][\x80-\xbf]{2}|[\xf0-\xf7][\x80-\xbf]{3}|[\xf8-\xfb][\x80-\xbf]{4}|[\xfc-\xfd][\x80-\xbf]{5})*\z/', '', $result['line']) === '') {
+                    return 'UTF-8';
+                }
+                if (preg_replace('/\A([\x00-\x7f]|[\xa1-\xdf]|[\x81-\x9f\xe0-\xfc][\x40-\x7e\x80-\xfc])*\z/', '', $result['line']) === '') {
+                    return 'SJIS-win';
+                }
+                if (preg_replace('/\A([\x00-\x7f]|[\xa1-\xfe][\xa1-\xfe]|\x8e[\xa1-\xdf]|\x8f[\xa1-\xfe][\xa1-\xfe])*\z/', '', $result['line']) === '') {
+                    return 'eucJP-win';
+                }
+                if (preg_replace('/\A([\x00-\x1a\x1c-\x7f]|\x1b\x24[\x40\x42](?:[\x21-\x7e][\x21-\x7e])+|\x1b\x24\x28[\x40\x42\x44](?:[\x21-\x7e][\x21-\x7e])+|\x1b\x28\x42|\x1b\x28\x4a[\x00-\x1a\x1c-\x7f]+|\x1b\x28\x49[\x00-\x1a\x1c-\x7f]+\x1b\x28\x42)*\z/', '', $result['line']) === '') {
+                    return 'ISO-2022-JP-MS';
+                }
+                return mb_detect_encoding($result['line'], array('UTF-8', 'eucJP-win', 'SJIS-win', 'ISO-2022-JP'));
+            }
+        }
     }
 
     /**

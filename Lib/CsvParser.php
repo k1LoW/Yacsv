@@ -8,7 +8,10 @@ class CsvParser {
      * @see http://yossy.iimp.jp/wp/?p=56
      * @param $line
      */
-    public static function parseCsvLine($handle, $d, $e){
+    public static function parseCsvLine($handle, $d, $e, $length = null){
+        if (in_array($e, array(false, null, ''))) {
+            $e = '__YACSVENCLOSURE__';
+        }
         $line = "";
         $eof = false;
         while (($eof != true) && (!feof($handle))) {
