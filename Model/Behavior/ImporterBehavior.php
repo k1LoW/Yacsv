@@ -45,7 +45,7 @@ class ImporterBehavior extends ModelBehavior {
     public function importCsv(Model $model, $data = null, $options = array()){
         $this->model = $model;
         $this->fields = $model->importFields;
-        $this->setOptions($model, $options);
+        $this->setCsvOptions($model, $options);
 
         $importFilterArgs = $model->importFilterArgs;
         if (empty($importFilterArgs)) {
