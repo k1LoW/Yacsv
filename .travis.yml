@@ -8,7 +8,7 @@ env:
 
 before_script:
   - sh -c "if [ '$DB' = 'mysql' ]; then mysql -e 'CREATE DATABASE cakephp_test;'; fi"
-  - wget https://github.com/cakephp/cakephp/tarball/2.2.0 -O cake.tar.gz
+  - wget https://github.com/cakephp/cakephp/tarball/2.2.5 -O cake.tar.gz
   - tar xf cake.tar.gz
   - mv cakephp-cakephp-* ./cakephp
   - chmod -R 777 ./cakephp/app/tmp
