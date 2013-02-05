@@ -227,7 +227,7 @@ class ImporterBehavior extends ModelBehavior {
             $this->options['csvEncoding'] = $csvEncoding;
         }
 
-        if ($this->options['hasHeader']) {
+        if ($this->options['hasHeader'] && is_numeric($parseLimit)) {
             $parseLimit += $this->options['skipHeaderCount'];
         }
 
