@@ -12,6 +12,9 @@ class CsvParser {
         if (in_array($e, array(false, null, ''))) {
             $e = '__YACSVENCLOSURE__';
         }
+        if (in_array($d, array(false, null, ''))) {
+            $d = '"';
+        }
         $line = "";
         $eof = false;
         while (($eof != true) && (!feof($handle))) {
