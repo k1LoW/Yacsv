@@ -52,6 +52,22 @@ class ImporterBehaviorTest extends CakeTestCase {
 	}
 
 	/**
+	 * make CSV file use CR (carriage return) for test
+	 *
+	 */
+	private function _makeDummyCRCsv($data, $csvEncoding = 'UTF-8') {
+		$this->csvFile = TMP . uniqid('importer_') . '.csv';
+
+		$fp = fopen($this->csvFile, 'w');
+		foreach ($data as $d) {
+			fwrite($fp, mb_convert_encoding($d . "\r", $csvEncoding));
+		}
+		fclose($fp);
+
+		return $this->csvFile;
+	}
+
+	/**
 	 * @dataProvider csvDataProvider
 	 *
 	 */
@@ -63,6 +79,34 @@ class ImporterBehaviorTest extends CakeTestCase {
 		$this->assertTrue($result);
 
 		$results = $this->Importer->find('all');
+
+		$this->assertTrue((count($results) > 0));
+
+		for($i = 0; $i < count($results); ++$i) {
+			$name = $results[$i]['Importer']['name'];
+			$country = $results[$i]['Importer']['country'];
+
+			$this->assertSame($expected[$i]['name'], $name);
+			$this->assertSame($expected[$i]['country'], $country);
+		}
+	}
+
+	/**
+	 * @dataProvider csvDataProvider
+	 *
+	 * jpn: CRを改行コードとして認識させたいときはauto_detect_line_endingsを有効にすればいい
+	 */
+	public function testImportCsvCRFromFile($data, $csvEncoding, $options, $expected) {
+
+		ini_set('auto_detect_line_endings', true);
+
+		$csvFile = $this->_makeDummyCRCsv($data, $csvEncoding);
+		$result = $this->Importer->importCsvFromFile($csvFile, $options);
+		$this->assertTrue($result);
+
+		$results = $this->Importer->find('all');
+
+		$this->assertTrue((count($results) > 0));
 
 		for($i = 0; $i < count($results); ++$i) {
 			$name = $results[$i]['Importer']['name'];
