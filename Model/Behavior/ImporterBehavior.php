@@ -20,6 +20,7 @@ class ImporterBehavior extends ModelBehavior {
 
     private $importedCount = 0;
     private $maxColumnCount = 0;
+    private $delimiterCandidates = array(',', "\t", ';', ' ');
     const AUTO = 'auto';
     const DETECT_SAMPLE_COUNT = 3;
 
@@ -268,7 +269,7 @@ class ImporterBehavior extends ModelBehavior {
         $dataCount = 0;
         $parseLimit = self::DETECT_SAMPLE_COUNT;
         $e = $this->options['enclosure'];
-        $candidates = array(',', "\t", ';', ' ');
+        $candidates = $this->delimiterCandidates;
 
         // for skip header
         if ($this->options['hasHeader']) {
@@ -308,6 +309,9 @@ class ImporterBehavior extends ModelBehavior {
         }
         arsort($results, SORT_NUMERIC);
         arsort($results, SORT_NUMERIC);
+        if (empty($result)) {
+            return $candidates[0];
+        }
         return key($results);
     }
 
