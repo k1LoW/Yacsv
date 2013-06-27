@@ -13,6 +13,7 @@ class ImporterBehavior extends ModelBehavior {
         'delimiter' => ',',
         'enclosure' => '"',
         'forceImport' => false,
+        'beforeImport' => false,
         'saveMethod' => false,
         'allowExtension' => false,
         'parseLimit' => false,
@@ -153,6 +154,9 @@ class ImporterBehavior extends ModelBehavior {
      *
      */
     private function _importCsv($filePath){
+        if ($this->options['beforeImport']) {
+            call_user_func_array($this->options['beforeImport'], array($filePath));
+        }
         $csvData = $this->parseCsvFile($this->model, $filePath);
         $this->importedCount = 0;
         $invalidLines = array();
