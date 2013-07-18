@@ -104,7 +104,6 @@ class ImporterBehavior extends ModelBehavior {
                             $this->model->importValidationErrors = $result;
                             return true;
                         }
-                        $this->model->rollback();
                         $this->model->importValidationErrors = $result;
                         throw new YacsvException(__d('Yacsv', 'Yacsv: CSV Import Error'));
                     }
