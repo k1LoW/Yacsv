@@ -3,7 +3,7 @@
     "description": "Yet another CSV utility plugin for CakePHP",
     "type": "cakephp-plugin",
     "keywords": ["cakephp", "csv"],
-    "homepage": "https://github.com/k1LoW/Yasd",
+    "homepage": "https://github.com/k1LoW/Yacsv",
     "license": "MIT",
     "authors": [
         {
