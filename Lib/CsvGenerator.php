@@ -9,8 +9,9 @@ class CsvGenerator {
         'csvEncoding' => 'UTF-8',
         'delimiter' => ',',
         'enclosure' => '"',
-        'forceOutput' => false,
         'newlineChar' => "\n",
+        'forceEnclose' => false,
+        'forceOutput' => false,
     );
 
     /**
