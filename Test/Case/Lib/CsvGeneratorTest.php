@@ -48,6 +48,94 @@ class CsvGeneratorTest extends CakeTestCase {
      *
      */
     public function findDataProvider(){
+
+        // デフォルト出力
+        $data[] = array(
+            array('Post' => array(
+                'id' => 1,
+                'title' => 'Title',
+                'body' => 'Hello World',
+                'created' => '2014-11-28 00:00:00',
+            )),
+            array('Post' => array(
+                'id' => 2,
+                'title' => 'タイトル',
+                'body' => 'こんにちは世界',
+                'created' => '2014-11-29 00:00:00',
+            )),
+        );
+        $fields[] = array(
+            'Post.id',
+            'Post.title',
+            'Post.body',
+            'Post.created',
+        );
+        $options[] = array();
+        $csv = <<< EOF
+"1","Title","Hello World","2014-11-28 00:00:00"
+"2","タイトル","こんにちは世界","2014-11-29 00:00:00"
+
+EOF;
+        $expected[] = mb_convert_encoding($csv, 'Shift-JIS');
+
+        // $fieldsで順番入れ替えが可能
+        $data[] = array(
+            array('Post' => array(
+                'id' => 1,
+                'title' => 'Title',
+                'body' => 'Hello World',
+                'created' => '2014-11-28 00:00:00',
+            )),
+            array('Post' => array(
+                'id' => 2,
+                'title' => 'タイトル',
+                'body' => 'こんにちは世界',
+                'created' => '2014-11-29 00:00:00',
+            )),
+        );
+        $fields[] = array(
+            'Post.body',
+            'Post.title',
+            'Post.created',
+        );
+        $options[] = array();
+        $csv = <<< EOF
+"Hello World","Title","2014-11-28 00:00:00"
+"こんにちは世界","タイトル","2014-11-29 00:00:00"
+
+EOF;
+        $expected[] = mb_convert_encoding($csv, 'Shift-JIS');
+
+        // $fieldsでヘッダ設定が可能
+        $data[] = array(
+            array('Post' => array(
+                'id' => 1,
+                'title' => 'Title',
+                'body' => 'Hello World',
+                'created' => '2014-11-28 00:00:00',
+            )),
+            array('Post' => array(
+                'id' => 2,
+                'title' => 'タイトル',
+                'body' => 'こんにちは世界',
+                'created' => '2014-11-29 00:00:00',
+            )),
+        );
+        $fields[] = array(
+            'タイトル' => 'Post.title',
+            '内容' => 'Post.body',
+            '投稿日時' => 'Post.created',
+        );
+        $options[] = array();
+        $csv = <<< EOF
+"タイトル","内容","投稿日時"
+"Title","Hello World","2014-11-28 00:00:00"
+"タイトル","こんにちは世界","2014-11-29 00:00:00"
+
+EOF;
+        $expected[] = mb_convert_encoding($csv, 'Shift-JIS');
+
+        // UTF-8でも出力可能
         $data[] = array(
             array('Post' => array(
                 'id' => 1,
@@ -68,13 +156,40 @@ class CsvGeneratorTest extends CakeTestCase {
             'Post.body',
             'Post.created',
         );
-        $options[] = array();
+        $options[] = array('csvEncoding' => 'UTF-8');
         $csv = <<< EOF
 "1","Title","Hello World","2014-11-28 00:00:00"
 "2","Title2","Hello World2","2014-11-29 00:00:00"
 
 EOF;
+        $expected[] = $csv;
 
+        // 対象フィールドがなかったら空値
+        $data[] = array(
+            array('Post' => array(
+                'id' => 1,
+                'title' => 'Title',
+                'body' => 'Hello World',
+                'created' => '2014-11-28 00:00:00',
+            )),
+            array('Post' => array(
+                'id' => 2,
+                'body' => 'Hello World2',
+                'created' => '2014-11-29 00:00:00',
+            )),
+        );
+        $fields[] = array(
+            'Post.id',
+            'Post.title',
+            'Post.body',
+            'Post.created',
+        );
+        $options[] = array();
+        $csv = <<< EOF
+"1","Title","Hello World","2014-11-28 00:00:00"
+"2","","Hello World2","2014-11-29 00:00:00"
+
+EOF;
         $expected[] = mb_convert_encoding($csv, 'Shift-JIS');
 
         $d = array();

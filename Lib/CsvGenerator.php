@@ -20,8 +20,13 @@ class CsvGenerator {
         $e = $options['enclosure'];
         if ($options['forceOutput']) {
             $fp = fopen('php://output','w');
-            if ($fields == array_values($fields)) {
+            if ($fields !== array_values($fields)) {
                 $header = array_map(function($v) use ($e) { return $e . $v . $e;}, array_keys($fields));
+                if ($options['csvEncoding'] !== 'UTF-8') {
+                    fwrite($fp, mb_convert_encoding(implode($d, $header) . "\n", $options['csvEncoding']));
+                } else {
+                    fwrite($fp, implode($d, $header) . "\n");
+                }
             }
             foreach ($data as $line) {
                 $tmp = array();
@@ -37,8 +42,9 @@ class CsvGenerator {
             fclose($fp);
         } else {
             $out = '';
-            if ($fields == array_values($fields)) {
+            if ($fields !== array_values($fields)) {
                 $header = array_map(function($v) use ($e) { return $e . $v . $e;}, array_keys($fields));
+                $out .= implode($d, $header) . "\n";
             }
             foreach ($data as $line) {
                 $tmp = array();
