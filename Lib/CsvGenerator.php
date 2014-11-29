@@ -10,7 +10,7 @@ class CsvGenerator {
         'delimiter' => ',',
         'enclosure' => '"',
         'newlineChar' => "\n",
-        'forceEnclose' => false,
+        'forceEnclose' => true,
         'forceOutput' => false,
     );
 
