@@ -2,8 +2,7 @@
 App::uses('CsvGenerator', 'Yacsv.Lib');
 
 /**
- *
- *
+ * CsvGeneratorTest
  *
  */
 class CsvGeneratorTest extends CakeTestCase {
@@ -76,7 +75,7 @@ class CsvGeneratorTest extends CakeTestCase {
 "2","タイトル","こんにちは世界","2014-11-29 00:00:00"
 
 EOF;
-        $expected[] = mb_convert_encoding($csv, 'Shift-JIS');
+        $expected[] = $csv;
 
         // $fieldsで順番入れ替えが可能
         $data[] = array(
@@ -104,7 +103,7 @@ EOF;
 "こんにちは世界","タイトル","2014-11-29 00:00:00"
 
 EOF;
-        $expected[] = mb_convert_encoding($csv, 'Shift-JIS');
+        $expected[] = $csv;
 
         // $fieldsでヘッダ設定が可能
         $data[] = array(
@@ -133,9 +132,9 @@ EOF;
 "タイトル","こんにちは世界","2014-11-29 00:00:00"
 
 EOF;
-        $expected[] = mb_convert_encoding($csv, 'Shift-JIS');
+        $expected[] = $csv;
 
-        // UTF-8でも出力可能
+        // Shift-JISでも出力可能
         $data[] = array(
             array('Post' => array(
                 'id' => 1,
@@ -156,13 +155,13 @@ EOF;
             'Post.body',
             'Post.created',
         );
-        $options[] = array('csvEncoding' => 'UTF-8');
+        $options[] = array('csvEncoding' => 'Shift-JIS');
         $csv = <<< EOF
 "1","Title","Hello World","2014-11-28 00:00:00"
 "2","Title2","Hello World2","2014-11-29 00:00:00"
 
 EOF;
-        $expected[] = $csv;
+        $expected[] = mb_convert_encoding($csv, 'Shift-JIS');
 
         // 対象フィールドがなかったら空値
         $data[] = array(
@@ -190,7 +189,7 @@ EOF;
 "2","","Hello World2","2014-11-29 00:00:00"
 
 EOF;
-        $expected[] = mb_convert_encoding($csv, 'Shift-JIS');
+        $expected[] = $csv;
 
         $d = array();
         for($i = 0; $i < count($data); ++$i) {
