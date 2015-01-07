@@ -17,6 +17,7 @@ class ImporterBehavior extends ModelBehavior {
         'saveMethod' => false,
         'allowExtension' => false,
         'parseLimit' => false,
+        'preDeleteAll' => false,
     );
 
     private $importedCount = 0;
@@ -94,6 +95,9 @@ class ImporterBehavior extends ModelBehavior {
 
                 try {
                     $this->model->begin();
+                    if ($this->options['preDeleteAll']) {
+                        $this->model->deleteAll(array('1=1'));
+                    }
                     $result = $this->_importCsv($filePath);
                     if ($result === true) {
                         $this->model->commit();
@@ -128,6 +132,9 @@ class ImporterBehavior extends ModelBehavior {
 
         try {
             $this->model->begin();
+            if ($this->options['preDeleteAll']) {
+                $this->model->deleteAll(array('1=1'));
+            }
             $result = $this->_importCsv($filePath);
             if ($result === true) {
                 $this->model->commit();

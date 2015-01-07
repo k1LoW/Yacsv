@@ -79,7 +79,6 @@ class ImporterBehaviorTest extends CakeTestCase {
 		$this->assertTrue($result);
 
 		$results = $this->Importer->find('all');
-
 		$this->assertTrue((count($results) > 0));
 
 		for($i = 0; $i < count($results); ++$i) {
@@ -88,6 +87,17 @@ class ImporterBehaviorTest extends CakeTestCase {
 
 			$this->assertSame($expected[$i]['name'], $name);
 			$this->assertSame($expected[$i]['country'], $country);
+		}
+
+		$result = $this->Importer->importCsvFromFile($csvFile, $options);
+		$this->assertTrue($result);
+		$results2 = $this->Importer->find('all');
+
+		// preDeleteAll check
+		if (!empty($options['preDeleteAll'])) {
+			$this->assertTrue((count($results) === count($results2)));
+		} else {
+			$this->assertTrue((count($results) * 2 === count($results2)));
 		}
 	}
 
@@ -426,6 +436,30 @@ class ImporterBehaviorTest extends CakeTestCase {
 			),
 		);
 
+		// preDeleteAll
+		$inputs[] = array(
+			'"Oyama","Japan"',
+			'"Suzuki","Antarctica"',
+		);
+		$csvEncoding[] = 'UTF-8';
+		$options[] = array(
+			'csvEncoding' => 'UTF-8',
+			'hasHeader' => false,
+			'delimiter' => ',',
+			'enclosure' => '"',
+			'preDeleteAll' => true,
+		);
+		$expected[] = array(
+			array(
+				'name' => 'Oyama',
+				'country' => 'Japan',
+			),
+			array(
+				'name' => 'Suzuki',
+				'country' => 'Antarctica',
+			),
+		);
+		
 		$data = array();
 		for($i = 0; $i < count($inputs); ++$i) {
 			$data[] = array($inputs[$i], $csvEncoding[$i], $options[$i], $expected[$i]);
