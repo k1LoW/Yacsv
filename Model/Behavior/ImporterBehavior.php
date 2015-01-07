@@ -95,9 +95,6 @@ class ImporterBehavior extends ModelBehavior {
 
                 try {
                     $this->model->begin();
-                    if ($this->options['preDeleteAll']) {
-                        $this->model->deleteAll(array('1=1'));
-                    }
                     $result = $this->_importCsv($filePath);
                     if ($result === true) {
                         $this->model->commit();
@@ -132,9 +129,6 @@ class ImporterBehavior extends ModelBehavior {
 
         try {
             $this->model->begin();
-            if ($this->options['preDeleteAll']) {
-                $this->model->deleteAll(array('1=1'));
-            }
             $result = $this->_importCsv($filePath);
             if ($result === true) {
                 $this->model->commit();
@@ -162,6 +156,9 @@ class ImporterBehavior extends ModelBehavior {
     private function _importCsv($filePath){
         if ($this->options['beforeImport']) {
             call_user_func_array($this->options['beforeImport'], array($filePath));
+        }
+        if ($this->options['preDeleteAll']) {
+            $this->model->deleteAll(array('1=1'));
         }
         $csvData = $this->parseCsvFile($this->model, $filePath);
         $this->importedCount = 0;
