@@ -94,14 +94,15 @@ class ImporterBehavior extends ModelBehavior {
                 move_uploaded_file($tmpFile, $filePath);
 
                 try {
-                    $this->model->begin();
+                    $db = $this->model->getDataSource();
+                    $db->begin();
                     $result = $this->_importCsv($filePath);
                     if ($result === true) {
-                        $this->model->commit();
+                        $db->commit();
                         return true;
                     } else {
                         if ($this->options['forceImport']) {
-                            $this->model->commit();
+                            $db->commit();
                             $this->model->importValidationErrors = $result;
                             return true;
                         }
@@ -109,7 +110,7 @@ class ImporterBehavior extends ModelBehavior {
                         throw new YacsvException(__d('Yacsv', 'Yacsv: CSV Import Error'));
                     }
                 } catch (Exception $e) {
-                    $this->model->rollback();
+                    $db->rollback();
                     throw new YacsvException($e->getMessage());
                 }
             }
@@ -128,23 +129,24 @@ class ImporterBehavior extends ModelBehavior {
         $this->setCsvOptions($model, $options);
 
         try {
-            $this->model->begin();
+            $db = $this->model->getDataSource();
+            $db->begin();
             $result = $this->_importCsv($filePath);
             if ($result === true) {
-                $this->model->commit();
+                $db->commit();
                 return true;
             } else {
                 if ($this->options['forceImport']) {
-                    $this->model->commit();
+                    $db->commit();
                     $this->model->importValidationErrors = $result;
                     return true;
                 }
-                $this->model->rollback();
+                $db->rollback();
                 $this->model->importValidationErrors = $result;
                 throw new YacsvException(__d('Yacsv', 'Yacsv: CSV Import Error'));
             }
         } catch (Exception $e) {
-            $this->model->rollback();
+            $db->rollback();
             throw new YacsvException($e->getMessage());
         }
     }
